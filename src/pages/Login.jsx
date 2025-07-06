@@ -82,10 +82,6 @@ const Login = () => {
       }
 
       setUserRoles(roles);
-      
-      if (roles.length === 1) {
-        window.location.href = roles[0].url;
-      }
     } catch (error) {
       console.error('Token validation error:', error);
       localStorage.removeItem('jwtToken');
@@ -141,10 +137,6 @@ const Login = () => {
       }
 
       setUserRoles(roles);
-      
-      /*if (roles.length === 1) {
-        window.location.href = roles[0].url;
-      }*/
     } catch (error) {
       setErrors({ form: error.message });
     } finally {
@@ -185,13 +177,13 @@ const Login = () => {
     }, 1500);
   };
 
-  if (userRoles.length > 1 && !selectedRole) {
+  if (userRoles.length > 0 && !selectedRole) {
     return (
       <div className="role-selector-container">
         <div className="role-selector-card">
           <div className="role-selector-header">
             <h2>Welcome to Journal Management System</h2>
-            <p>You have access to multiple portals. Please select your role:</p>
+            <p>You have access to {userRoles.length === 1 ? 'a portal' : 'multiple portals'}. Please {userRoles.length === 1 ? 'proceed' : 'select your role'}:</p>
           </div>
           
           <div className="role-grid">
