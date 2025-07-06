@@ -120,7 +120,7 @@ const LoggedHeader = () => {
     });
 
     // 4. Redirect to login page
-    window.location.href = 'https://journal-management-system-frontend.vercel.app/login';
+    window.location.href = 'https://computer-jagat.vercel.app/login';
   };
 
   useEffect(() => {
