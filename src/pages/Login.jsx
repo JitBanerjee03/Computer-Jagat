@@ -83,9 +83,9 @@ const Login = () => {
 
       setUserRoles(roles);
       
-      /*if (roles.length === 1) {
+      if (roles.length === 1) {
         window.location.href = roles[0].url;
-      }*/
+      }
     } catch (error) {
       console.error('Token validation error:', error);
       localStorage.removeItem('jwtToken');
