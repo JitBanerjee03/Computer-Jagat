@@ -45,7 +45,7 @@ const JournalCard = ({ journal }) => {
             )}
           </button>
           <a
-            href={journal.manuscript_file}
+            href={`${import.meta.env.VITE_BACKEND_DJANGO_URL}`+journal.manuscript_file}
             className="download-btn"
             target="_blank"
             rel="noopener noreferrer"
