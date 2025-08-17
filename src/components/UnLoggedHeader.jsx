@@ -23,7 +23,7 @@ const UnLoggedHeader = () => {
   const navigate = useNavigate();
 
   const roles = [
-    { 
+    /*{ 
       name: 'Author', 
       icon: <FaUser />, 
       link: 'https://computer-jagat-author.vercel.app/',
@@ -57,7 +57,7 @@ const UnLoggedHeader = () => {
       link: 'https://computer-jagat-chief-editor.vercel.app/',
       description: 'Manage the entire editorial process',
       color: '#e74c3c'
-    }
+    }*/
   ];
 
   const openLink = (url) => {
