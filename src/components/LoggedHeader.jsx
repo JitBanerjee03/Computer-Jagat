@@ -576,7 +576,7 @@ import {
 } from 'react-icons/fa';
 import './styles/Header.css';
 import { useNavigate } from 'react-router-dom';
-import { contextProviderDeclare } from '../store/ContextProvider';
+import { ContextProviderDeclare } from '../store/ContextProvider';
 
 const LoggedHeader = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -585,20 +585,23 @@ const LoggedHeader = () => {
   const [isLoading, setIsLoading] = useState(true);
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
-  const { handleLogout } = useContext(contextProviderDeclare);
+  const { setToken } = useContext(ContextProviderDeclare);
 
   const allRoles = {
-    author: { name: 'Author', icon: <FaUser />, description: 'Submit and track your manuscripts', color: '#3498db' },
-    reviewer: { name: 'Reviewer', icon: <FaUserEdit />, description: 'Review submitted manuscripts', color: '#2ecc71' },
-    associate_editor: { name: 'Associate Editor', icon: <FaUserTie />, description: 'Manage the review process', color: '#9b59b6' },
-    area_editor: { name: 'Area Editor', icon: <FaUserShield />, description: 'Oversee specific subject areas', color: '#e67e22' },
-    eic: { name: 'Editor in Chief', icon: <FaUserCog />, description: 'Manage the entire editorial process', color: '#e74c3c' },
+    author: { name: 'Author', icon: <FaUser />, description: 'Submit and track your manuscripts', color: '#3498db', portal: 'https://computer-jagat-author.vercel.app' },
+    reviewer: { name: 'Reviewer', icon: <FaUserEdit />, description: 'Review submitted manuscripts', color: '#2ecc71', portal: 'https://computer-jagat-reviewer.vercel.app' },
+    associate_editor: { name: 'Associate Editor', icon: <FaUserTie />, description: 'Manage the review process', color: '#9b59b6', portal: 'https://computer-jagat-associate-editor.vercel.app' },
+    area_editor: { name: 'Area Editor', icon: <FaUserShield />, description: 'Oversee specific subject areas', color: '#e67e22', portal: 'https://computer-jagat-area-editor.vercel.app' },
+    eic: { name: 'Editor in Chief', icon: <FaUserCog />, description: 'Manage the entire editorial process', color: '#e74c3c', portal: 'https://computer-jagat-chief-editor.vercel.app' },
   };
 
   useEffect(() => {
     const fetchRoles = async () => {
       const token = localStorage.getItem('jwtToken');
-      if (!token) { setIsLoading(false); return; }
+      if (!token) { 
+        setIsLoading(false); 
+        return; 
+      }
 
       try {
         const res = await fetch(`${import.meta.env.VITE_BACKEND_DJANGO_URL}/sso-auth/validate-token/`, {
@@ -617,7 +620,7 @@ const LoggedHeader = () => {
         setAvailableRoles(userRoles.map(roleId => ({
           id: roleId,
           ...allRoles[roleId],
-          url: `${window.location.origin}/?token=${encodeURIComponent(token)}`
+          url: `${allRoles[roleId].portal}?token=${encodeURIComponent(token)}`
         })));
       } catch (err) {
         console.error('Error fetching roles:', err);
@@ -628,10 +631,23 @@ const LoggedHeader = () => {
     };
 
     fetchRoles();
-  }, [handleLogout]);
+  }, []);
 
   const toggleDropdown = (roleId) => {
     setActiveDropdown(activeDropdown === roleId ? null : roleId);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('jwtToken');
+    setToken(null);
+
+    const portals = Object.values(allRoles).map(role => role.portal);
+    portals.forEach(domain => {
+      const win = window.open(`${domain}?logout=true&timestamp=${Date.now()}`, '_blank', 'noopener,noreferrer');
+      setTimeout(() => win?.close(), 1000);
+    });
+
+    navigate('/login');
   };
 
   useEffect(() => {
@@ -728,3 +744,4 @@ const LoggedHeader = () => {
 };
 
 export default LoggedHeader;
+
