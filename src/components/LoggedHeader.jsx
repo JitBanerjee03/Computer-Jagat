@@ -255,7 +255,7 @@ const LoggedHeader = () => {
 
 export default LoggedHeader;*/
 
-import React, { useState, useRef, useEffect, useContext } from 'react';
+/*import React, { useState, useRef, useEffect, useContext } from 'react';
 import { 
   FaUser, 
   FaUserEdit, 
@@ -443,7 +443,6 @@ const LoggedHeader = () => {
   return (
     <header className="journal-header">
       <div className="header-container">
-        {/* Logo Section */}
         <div className="logo-section">
           <div className="logo-container">
             <img 
@@ -455,7 +454,6 @@ const LoggedHeader = () => {
           </div>
         </div>
 
-        {/* Desktop Navigation */}
         {availableRoles.length > 0 && (
           <nav className="desktop-nav" ref={dropdownRef}>
             {availableRoles.map((role) => (
@@ -499,7 +497,6 @@ const LoggedHeader = () => {
               </div>
             ))}
 
-            {/* Logout Button */}
             <div className="auth-buttons">
               <button 
                 className="logout-button"
@@ -513,7 +510,6 @@ const LoggedHeader = () => {
           </nav>
         )}
 
-        {/* Mobile Menu Button */}
         <button 
           className="mobile-menu-button" 
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -523,7 +519,6 @@ const LoggedHeader = () => {
         </button>
       </div>
 
-      {/* Mobile Navigation */}
       {isMobileMenuOpen && availableRoles.length > 0 && (
         <div className="mobile-nav">
           {availableRoles.map((role) => (
@@ -547,7 +542,6 @@ const LoggedHeader = () => {
             </div>
           ))}
 
-          {/* Mobile Logout Button */}
           <div className="mobile-auth-buttons">
             <button
               className="mobile-logout-button"
@@ -556,6 +550,175 @@ const LoggedHeader = () => {
             >
               <FaSignOutAlt className="button-icon" />
               <span>Logout</span>
+            </button>
+          </div>
+        </div>
+      )}
+    </header>
+  );
+};
+
+export default LoggedHeader;*/
+
+import React, { useState, useRef, useEffect, useContext } from 'react';
+import { 
+  FaUser, 
+  FaUserEdit, 
+  FaUserTie, 
+  FaUserShield, 
+  FaUserCog, 
+  FaBars, 
+  FaTimes,
+  FaChevronDown,
+  FaChevronUp,
+  FaExternalLinkAlt,
+  FaSignOutAlt
+} from 'react-icons/fa';
+import './styles/Header.css';
+import { useNavigate } from 'react-router-dom';
+import { contextProviderDeclare } from '../store/ContextProvider';
+
+const LoggedHeader = () => {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [activeDropdown, setActiveDropdown] = useState(null);
+  const [availableRoles, setAvailableRoles] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const dropdownRef = useRef(null);
+  const navigate = useNavigate();
+  const { handleLogout } = useContext(contextProviderDeclare);
+
+  const allRoles = {
+    author: { name: 'Author', icon: <FaUser />, description: 'Submit and track your manuscripts', color: '#3498db' },
+    reviewer: { name: 'Reviewer', icon: <FaUserEdit />, description: 'Review submitted manuscripts', color: '#2ecc71' },
+    associate_editor: { name: 'Associate Editor', icon: <FaUserTie />, description: 'Manage the review process', color: '#9b59b6' },
+    area_editor: { name: 'Area Editor', icon: <FaUserShield />, description: 'Oversee specific subject areas', color: '#e67e22' },
+    eic: { name: 'Editor in Chief', icon: <FaUserCog />, description: 'Manage the entire editorial process', color: '#e74c3c' },
+  };
+
+  useEffect(() => {
+    const fetchRoles = async () => {
+      const token = localStorage.getItem('jwtToken');
+      if (!token) { setIsLoading(false); return; }
+
+      try {
+        const res = await fetch(`${import.meta.env.VITE_BACKEND_DJANGO_URL}/sso-auth/validate-token/`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!res.ok) throw new Error('Token validation failed');
+        const data = await res.json();
+
+        const userRoles = [];
+        if (data.eic_id) userRoles.push('eic');
+        if (data.area_editor_id) userRoles.push('area_editor');
+        if (data.associate_editor_id) userRoles.push('associate_editor');
+        if (data.reviewer_id) userRoles.push('reviewer');
+        if (data.id) userRoles.push('author');
+
+        setAvailableRoles(userRoles.map(roleId => ({
+          id: roleId,
+          ...allRoles[roleId],
+          url: `${window.location.origin}/?token=${encodeURIComponent(token)}`
+        })));
+      } catch (err) {
+        console.error('Error fetching roles:', err);
+        handleLogout();
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchRoles();
+  }, [handleLogout]);
+
+  const toggleDropdown = (roleId) => {
+    setActiveDropdown(activeDropdown === roleId ? null : roleId);
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) setActiveDropdown(null);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  if (isLoading) return (
+    <header className="journal-header">
+      <div className="header-container">
+        <div className="logo-section">
+          <img src="/logo.png" alt="Logo" className="logo-image" onClick={() => navigate('/')} />
+        </div>
+        <div className="loading-message">Loading user roles...</div>
+      </div>
+    </header>
+  );
+
+  return (
+    <header className="journal-header">
+      <div className="header-container">
+        <div className="logo-section">
+          <img src="/logo.png" alt="Logo" className="logo-image" onClick={() => navigate('/')} />
+        </div>
+
+        {availableRoles.length > 0 && (
+          <nav className="desktop-nav" ref={dropdownRef}>
+            {availableRoles.map(role => (
+              <div key={role.id} className={`nav-item ${activeDropdown === role.id ? 'active' : ''}`}
+                   onMouseEnter={() => setActiveDropdown(role.id)} onMouseLeave={() => setActiveDropdown(null)}>
+                <div className="nav-button" onClick={() => toggleDropdown(role.id)} style={{ '--role-color': role.color }}>
+                  <span className="button-icon">{role.icon}</span>
+                  <span className="button-text">{role.name}</span>
+                  <span className="dropdown-arrow">{activeDropdown === role.id ? <FaChevronUp /> : <FaChevronDown />}</span>
+                </div>
+
+                {activeDropdown === role.id && (
+                  <div className="dropdown-menu">
+                    <div className="dropdown-content">
+                      <div className="role-header" style={{ backgroundColor: role.color }}>
+                        <span className="button-icon">{role.icon}</span>
+                        <span className="role-title">{role.name}</span>
+                      </div>
+                      <p className="role-description">{role.description}</p>
+                      <button className="portal-button" onClick={() => window.open(role.url, '_blank')} style={{ backgroundColor: role.color }}>
+                        Go to {role.name} Portal <FaExternalLinkAlt className="external-icon" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+
+            <div className="auth-buttons">
+              <button className="logout-button" onClick={handleLogout}>
+                <FaSignOutAlt className="button-icon" /> <span>Logout</span>
+              </button>
+            </div>
+          </nav>
+        )}
+
+        <button className="mobile-menu-button" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
+          {isMobileMenuOpen ? <FaTimes /> : <FaBars />}
+        </button>
+      </div>
+
+      {isMobileMenuOpen && availableRoles.length > 0 && (
+        <div className="mobile-nav">
+          {availableRoles.map(role => (
+            <div key={role.id} className="mobile-nav-item">
+              <button className="mobile-nav-button" onClick={() => window.open(role.url, '_blank')} style={{ borderLeft: `4px solid ${role.color}` }}>
+                <span className="button-icon" style={{ color: role.color }}>{role.icon}</span>
+                <div className="mobile-button-text">
+                  <span className="role-name">{role.name}</span>
+                  <span className="role-description">{role.description}</span>
+                </div>
+                <FaExternalLinkAlt className="external-icon" />
+              </button>
+            </div>
+          ))}
+
+          <div className="mobile-auth-buttons">
+            <button className="mobile-logout-button" onClick={handleLogout}>
+              <FaSignOutAlt className="button-icon" /> <span>Logout</span>
             </button>
           </div>
         </div>
