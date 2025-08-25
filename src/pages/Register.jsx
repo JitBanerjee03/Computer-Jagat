@@ -48,21 +48,11 @@ const Register = () => {
     }
   };
 
-  const handleRoleToggle = (roleId) => {
+  const handleMultiSelectChange = (e, fieldName) => {
+    const selected = Array.from(e.target.selectedOptions, option => option.value);
     setFormData(prev => ({
       ...prev,
-      roles: prev.roles.includes(roleId)
-        ? prev.roles.filter(id => id !== roleId)
-        : [...prev.roles, roleId]
-    }));
-  };
-
-  const handleSubjectAreaToggle = (subjectId) => {
-    setFormData(prev => ({
-      ...prev,
-      subject_areas: prev.subject_areas.includes(subjectId)
-        ? prev.subject_areas.filter(id => id !== subjectId)
-        : [...prev.subject_areas, subjectId]
+      [fieldName]: selected
     }));
   };
 
@@ -95,6 +85,15 @@ const Register = () => {
       if (!passwordRegex.test(formData.password)) {
         newErrors.password =
           'Password must be at least 8 characters long, include an uppercase letter, a lowercase letter, a number, and a special character';
+      }
+    }
+
+    // Phone number validation (optional but must be valid if provided)
+    if (formData.phone_number) {
+      const phoneRegex = /^\+?\d{10,15}$/;
+      if (!phoneRegex.test(formData.phone_number)) {
+        newErrors.phone_number =
+          'Phone number must be 10–15 digits and may include a leading +';
       }
     }
 
@@ -229,7 +228,9 @@ const Register = () => {
                   name="phone_number"
                   value={formData.phone_number}
                   onChange={handleChange}
+                  className={errors.phone_number ? 'error' : ''}
                 />
+                {errors.phone_number && <span className="error-message">{errors.phone_number}</span>}
               </div>
 
               <div className="form-group">
@@ -288,39 +289,44 @@ const Register = () => {
             </div>
           </div>
 
+          {/* Subject Areas Dropdown */}
           <div className="form-section">
             <h3 className="section-title">Subject Areas</h3>
-            <div className="subject-areas-container">
-              {subjectAreas.map(subject => (
-                <div key={subject.id} className="subject-option">
-                  <input
-                    type="checkbox"
-                    id={`subject-${subject.id}`}
-                    checked={formData.subject_areas.includes(subject.id)}
-                    onChange={() => handleSubjectAreaToggle(subject.id)}
-                  />
-                  <label htmlFor={`subject-${subject.id}`}>{subject.name}</label>
-                </div>
-              ))}
+            <div className="form-group">
+              <label>Select Subject Areas</label>
+              <select
+                multiple
+                value={formData.subject_areas}
+                onChange={(e) => handleMultiSelectChange(e, 'subject_areas')}
+              >
+                {subjectAreas.map(subject => (
+                  <option key={subject.id} value={subject.id}>
+                    {subject.name}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
+          {/* Roles Dropdown */}
           <div className="form-section">
             <h3 className="section-title">Roles *</h3>
-            <div className="role-options">
-              {roleOptions.map(role => (
-                <div key={role.id} className="role-option">
-                  <input
-                    type="checkbox"
-                    id={`role-${role.id}`}
-                    checked={formData.roles.includes(role.id)}
-                    onChange={() => handleRoleToggle(role.id)}
-                  />
-                  <label htmlFor={`role-${role.id}`}>{role.label}</label>
-                </div>
-              ))}
+            <div className="form-group">
+              <label>Select Roles</label>
+              <select
+                multiple
+                value={formData.roles}
+                onChange={(e) => handleMultiSelectChange(e, 'roles')}
+                className={errors.roles ? 'error' : ''}
+              >
+                {roleOptions.map(role => (
+                  <option key={role.id} value={role.id}>
+                    {role.label}
+                  </option>
+                ))}
+              </select>
+              {errors.roles && <span className="error-message">{errors.roles}</span>}
             </div>
-            {errors.roles && <span className="error-message">{errors.roles}</span>}
           </div>
 
           <div className="form-actions">
