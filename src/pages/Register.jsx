@@ -19,13 +19,16 @@ const Register = () => {
   
   const navigate = useNavigate();
   const [subjectAreas, setSubjectAreas] = useState([]);
+  const [filteredSubjectAreas, setFilteredSubjectAreas] = useState([]);
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSubjectDropdown, setShowSubjectDropdown] = useState(false);
   const [showRolesDropdown, setShowRolesDropdown] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
   
   const subjectDropdownRef = useRef(null);
   const rolesDropdownRef = useRef(null);
+  const searchInputRef = useRef(null);
 
   const roleOptions = [
     { id: 'author', label: 'Author' },
@@ -38,9 +41,24 @@ const Register = () => {
   useEffect(() => {
     fetch(`${import.meta.env.VITE_BACKEND_DJANGO_URL}/journal/subject-areas/`)
       .then(response => response.json())
-      .then(data => setSubjectAreas(data))
+      .then(data => {
+        setSubjectAreas(data);
+        setFilteredSubjectAreas(data);
+      })
       .catch(error => console.error('Error fetching subject areas:', error));
   }, []);
+
+  // Filter subject areas based on search term
+  useEffect(() => {
+    if (searchTerm) {
+      const filtered = subjectAreas.filter(subject =>
+        subject.name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      setFilteredSubjectAreas(filtered);
+    } else {
+      setFilteredSubjectAreas(subjectAreas);
+    }
+  }, [searchTerm, subjectAreas]);
 
   // Handle clicking outside dropdowns to close them
   useEffect(() => {
@@ -59,6 +77,15 @@ const Register = () => {
     };
   }, []);
 
+  // Focus search input when dropdown opens
+  useEffect(() => {
+    if (showSubjectDropdown && searchInputRef.current) {
+      setTimeout(() => {
+        searchInputRef.current.focus();
+      }, 100);
+    }
+  }, [showSubjectDropdown]);
+
   const handleChange = (e) => {
     const { name, value, files } = e.target;
     setFormData(prev => ({
@@ -70,6 +97,10 @@ const Register = () => {
     }
   };
 
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+  };
+
   const handleCheckboxChange = (fieldName, value, isChecked) => {
     setFormData(prev => {
       const currentValues = [...prev[fieldName]];
@@ -79,6 +110,14 @@ const Register = () => {
         return { ...prev, [fieldName]: currentValues.filter(item => item !== value) };
       }
     });
+  };
+
+  const handleSubjectDropdownToggle = () => {
+    const newState = !showSubjectDropdown;
+    setShowSubjectDropdown(newState);
+    if (newState) {
+      setSearchTerm('');
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -316,7 +355,7 @@ const Register = () => {
             </div>
           </div>
 
-          {/* Improved Subject Areas Dropdown */}
+          {/* Improved Subject Areas Dropdown with Search */}
           <div className="form-section">
             <h3 className="section-title">Subject Areas</h3>
             <div className="form-group">
@@ -324,7 +363,7 @@ const Register = () => {
               <div className="custom-dropdown" ref={subjectDropdownRef}>
                 <div 
                   className={`dropdown-toggle ${showSubjectDropdown ? 'active' : ''}`}
-                  onClick={() => setShowSubjectDropdown(!showSubjectDropdown)}
+                  onClick={handleSubjectDropdownToggle}
                 >
                   {formData.subject_areas.length > 0 
                     ? `${formData.subject_areas.length} subject area(s) selected`
@@ -334,16 +373,34 @@ const Register = () => {
                 </div>
                 {showSubjectDropdown && (
                   <div className="dropdown-menu">
-                    {subjectAreas.map(subject => (
-                      <label key={subject.id} className="dropdown-item">
-                        <input
-                          type="checkbox"
-                          checked={formData.subject_areas.includes(subject.id.toString())}
-                          onChange={(e) => handleCheckboxChange('subject_areas', subject.id.toString(), e.target.checked)}
-                        />
-                        <span>{subject.name}</span>
-                      </label>
-                    ))}
+                    <div className="dropdown-search">
+                      <input
+                        type="text"
+                        placeholder="Search subject areas..."
+                        value={searchTerm}
+                        onChange={handleSearchChange}
+                        ref={searchInputRef}
+                        className="search-input"
+                      />
+                    </div>
+                    <div className="dropdown-items-container">
+                      {filteredSubjectAreas.length > 0 ? (
+                        filteredSubjectAreas.map(subject => (
+                          <label key={subject.id} className="dropdown-item">
+                            <input
+                              type="checkbox"
+                              checked={formData.subject_areas.includes(subject.id.toString())}
+                              onChange={(e) => handleCheckboxChange('subject_areas', subject.id.toString(), e.target.checked)}
+                            />
+                            <span>{subject.name}</span>
+                          </label>
+                        ))
+                      ) : (
+                        <div className="dropdown-no-results">
+                          No subject areas found matching "{searchTerm}"
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
