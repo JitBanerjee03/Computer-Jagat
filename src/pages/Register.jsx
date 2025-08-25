@@ -76,18 +76,31 @@ const Register = () => {
     if (!formData.first_name) newErrors.first_name = 'First name is required';
     if (!formData.last_name) newErrors.last_name = 'Last name is required';
 
+    // Email validation
     if (!formData.email) {
       newErrors.email = 'Email is required';
     } else {
-      // Email format check
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(formData.email)) {
         newErrors.email = 'Please enter a valid email address';
       }
     }
 
-    if (!formData.password) newErrors.password = 'Password is required';
-    if (formData.roles.length === 0) newErrors.roles = 'Please select at least one role';
+    // Password validation
+    if (!formData.password) {
+      newErrors.password = 'Password is required';
+    } else {
+      const passwordRegex =
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#^])[A-Za-z\d@$!%*?&#^]{8,}$/;
+      if (!passwordRegex.test(formData.password)) {
+        newErrors.password =
+          'Password must be at least 8 characters long, include an uppercase letter, a lowercase letter, a number, and a special character';
+      }
+    }
+
+    if (formData.roles.length === 0) {
+      newErrors.roles = 'Please select at least one role';
+    }
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
