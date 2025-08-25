@@ -75,7 +75,17 @@ const Register = () => {
     const newErrors = {};
     if (!formData.first_name) newErrors.first_name = 'First name is required';
     if (!formData.last_name) newErrors.last_name = 'Last name is required';
-    if (!formData.email) newErrors.email = 'Email is required';
+
+    if (!formData.email) {
+      newErrors.email = 'Email is required';
+    } else {
+      // Email format check
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email)) {
+        newErrors.email = 'Please enter a valid email address';
+      }
+    }
+
     if (!formData.password) newErrors.password = 'Password is required';
     if (formData.roles.length === 0) newErrors.roles = 'Please select at least one role';
 
