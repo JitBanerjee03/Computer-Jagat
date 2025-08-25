@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './styles/RegistrationForm.css';
 import { useNavigate } from 'react-router-dom';
 
@@ -21,6 +21,11 @@ const Register = () => {
   const [subjectAreas, setSubjectAreas] = useState([]);
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSubjectDropdown, setShowSubjectDropdown] = useState(false);
+  const [showRolesDropdown, setShowRolesDropdown] = useState(false);
+  
+  const subjectDropdownRef = useRef(null);
+  const rolesDropdownRef = useRef(null);
 
   const roleOptions = [
     { id: 'author', label: 'Author' },
@@ -37,6 +42,23 @@ const Register = () => {
       .catch(error => console.error('Error fetching subject areas:', error));
   }, []);
 
+  // Handle clicking outside dropdowns to close them
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (subjectDropdownRef.current && !subjectDropdownRef.current.contains(event.target)) {
+        setShowSubjectDropdown(false);
+      }
+      if (rolesDropdownRef.current && !rolesDropdownRef.current.contains(event.target)) {
+        setShowRolesDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   const handleChange = (e) => {
     const { name, value, files } = e.target;
     setFormData(prev => ({
@@ -48,12 +70,15 @@ const Register = () => {
     }
   };
 
-  const handleMultiSelectChange = (e, fieldName) => {
-    const selected = Array.from(e.target.selectedOptions, option => option.value);
-    setFormData(prev => ({
-      ...prev,
-      [fieldName]: selected
-    }));
+  const handleCheckboxChange = (fieldName, value, isChecked) => {
+    setFormData(prev => {
+      const currentValues = [...prev[fieldName]];
+      if (isChecked) {
+        return { ...prev, [fieldName]: [...currentValues, value] };
+      } else {
+        return { ...prev, [fieldName]: currentValues.filter(item => item !== value) };
+      }
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -148,11 +173,13 @@ const Register = () => {
         <div className="logo-container">
           <img src="/logo.png" alt="Journal Management System Logo" className="logo" />
         </div>
+        <h1 className="system-title">Journal Management System</h1>
+        <p className="system-subtitle">Create your account to get started</p>
       </div>
       
       <div className="registration-form">
         <div className="form-header">
-          <h2 className="form-title">Journal Management System Registration</h2>
+          <h2 className="form-title">Registration</h2>
           <div className="form-divider"></div>
         </div>
 
@@ -289,42 +316,71 @@ const Register = () => {
             </div>
           </div>
 
-          {/* Subject Areas Dropdown */}
+          {/* Improved Subject Areas Dropdown */}
           <div className="form-section">
             <h3 className="section-title">Subject Areas</h3>
             <div className="form-group">
               <label>Select Subject Areas</label>
-              <select
-                multiple
-                value={formData.subject_areas}
-                onChange={(e) => handleMultiSelectChange(e, 'subject_areas')}
-              >
-                {subjectAreas.map(subject => (
-                  <option key={subject.id} value={subject.id}>
-                    {subject.name}
-                  </option>
-                ))}
-              </select>
+              <div className="custom-dropdown" ref={subjectDropdownRef}>
+                <div 
+                  className={`dropdown-toggle ${showSubjectDropdown ? 'active' : ''}`}
+                  onClick={() => setShowSubjectDropdown(!showSubjectDropdown)}
+                >
+                  {formData.subject_areas.length > 0 
+                    ? `${formData.subject_areas.length} subject area(s) selected`
+                    : 'Choose subject areas'
+                  }
+                  <span className="dropdown-arrow">▼</span>
+                </div>
+                {showSubjectDropdown && (
+                  <div className="dropdown-menu">
+                    {subjectAreas.map(subject => (
+                      <label key={subject.id} className="dropdown-item">
+                        <input
+                          type="checkbox"
+                          checked={formData.subject_areas.includes(subject.id.toString())}
+                          onChange={(e) => handleCheckboxChange('subject_areas', subject.id.toString(), e.target.checked)}
+                        />
+                        <span>{subject.name}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
-          {/* Roles Dropdown */}
+          {/* Improved Roles Dropdown */}
           <div className="form-section">
             <h3 className="section-title">Roles *</h3>
             <div className="form-group">
               <label>Select Roles</label>
-              <select
-                multiple
-                value={formData.roles}
-                onChange={(e) => handleMultiSelectChange(e, 'roles')}
-                className={errors.roles ? 'error' : ''}
-              >
-                {roleOptions.map(role => (
-                  <option key={role.id} value={role.id}>
-                    {role.label}
-                  </option>
-                ))}
-              </select>
+              <div className={`custom-dropdown ${errors.roles ? 'error' : ''}`} ref={rolesDropdownRef}>
+                <div 
+                  className={`dropdown-toggle ${showRolesDropdown ? 'active' : ''}`}
+                  onClick={() => setShowRolesDropdown(!showRolesDropdown)}
+                >
+                  {formData.roles.length > 0 
+                    ? `${formData.roles.length} role(s) selected`
+                    : 'Choose roles'
+                  }
+                  <span className="dropdown-arrow">▼</span>
+                </div>
+                {showRolesDropdown && (
+                  <div className="dropdown-menu">
+                    {roleOptions.map(role => (
+                      <label key={role.id} className="dropdown-item">
+                        <input
+                          type="checkbox"
+                          checked={formData.roles.includes(role.id)}
+                          onChange={(e) => handleCheckboxChange('roles', role.id, e.target.checked)}
+                        />
+                        <span>{role.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
               {errors.roles && <span className="error-message">{errors.roles}</span>}
             </div>
           </div>
